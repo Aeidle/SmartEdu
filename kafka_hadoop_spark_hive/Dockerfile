@@ -8,19 +8,21 @@ RUN apt-get -y install openjdk-8-jdk
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 ENV PATH $PATH:/usr/lib/jvm/java-8-openjdk-amd64/bin
 
+#----Installing python-----------------------------------------
+RUN apt-get -y install python3 python3-pip
 
 #-----Installing hadoop-----------------------------
 RUN mkdir hadoop
-RUN wget https://dlcdn.apache.org/hadoop/common/hadoop-3.2.4/hadoop-3.2.4.tar.gz
-RUN tar -xzvf hadoop-3.2.4.tar.gz -C ./hadoop
-ADD ./hadoop_config/core-site.xml ./hadoop/hadoop-3.2.4/etc/hadoop
-ADD ./hadoop_config/hdfs-site.xml ./hadoop/hadoop-3.2.4/etc/hadoop
-ADD ./hadoop_config/hadoop-env.sh ./hadoop/hadoop-3.2.4/etc/hadoop
-ADD ./hadoop_config/mapred-site.xml ./hadoop/hadoop-3.2.4/etc/hadoop
-ADD ./hadoop_config/yarn-site.xml ./hadoop/hadoop-3.2.4/etc/hadoop
-ENV HADOOP_HOME /hadoop/hadoop-3.2.4
+RUN wget https://archive.apache.org/dist/hadoop/common/hadoop-3.3.0/hadoop-3.3.0.tar.gz
+RUN tar -xzvf hadoop-3.3.0.tar.gz -C ./hadoop
+ADD ./hadoop_config/core-site.xml ./hadoop/hadoop-3.3.0/etc/hadoop
+ADD ./hadoop_config/hdfs-site.xml ./hadoop/hadoop-3.3.0/etc/hadoop
+ADD ./hadoop_config/hadoop-env.sh ./hadoop/hadoop-3.3.0/etc/hadoop
+ADD ./hadoop_config/mapred-site.xml ./hadoop/hadoop-3.3.0/etc/hadoop
+ADD ./hadoop_config/yarn-site.xml ./hadoop/hadoop-3.3.0/etc/hadoop
+ENV HADOOP_HOME /hadoop/hadoop-3.3.0
 ENV PATH $PATH:$HADOOP_HOME/bin
-RUN echo "export HADOOP_HOME=./hadoop/hadoop-3.2.4" >>.bashrc
+RUN echo "export HADOOP_HOME=./hadoop/hadoop-3.3.0" >>.bashrc
 RUN echo "export HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop" >>.bashrc
 RUN echo "export HADOOP_HDFS_HOME=$HADOOP_HOME" >>.bashrc
 RUN echo "export HADOOP_INSTALL=$HADOOP_HOME" >>.bashrc
