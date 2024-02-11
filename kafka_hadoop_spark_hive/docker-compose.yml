@@ -1,0 +1,40 @@
+version: "1.1"
+services:
+  spark-hadoop-kafka:
+    image: smartedu:1.1
+    container_name: SmartEdu_backend
+    restart: always
+    ports:
+      - "22:22"
+      - "9000:9000"
+      - "8088:8088"
+      - "9870:9870"
+      - "10000:10000"
+      - "9083:9083"
+      - "10500:10500"
+      - "9092:9092"
+    tty: true
+    networks:
+      - SmartEdu-network
+    volumes:
+      - ./src:/SmartEdu_src
+      - hadoop_namenode:/hadoop/dfs/name
+      - hadoop_datanode:/hadoop/dfs/data
+      - hadoop_historyserver:/hadoop/yarn/timeline
+    command: 
+      - /bin/bash
+      - -c
+      - |
+        source .bashrc
+        source ~/.bashrc
+        service ssh start
+        start-dfs.sh
+        start-yarn.sh
+        jps
+networks:
+  SmartEdu-network:
+    external: true
+volumes:
+  hadoop_namenode:
+  hadoop_datanode:
+  hadoop_historyserver:

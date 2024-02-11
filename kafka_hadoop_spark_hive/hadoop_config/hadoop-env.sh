@@ -65,7 +65,7 @@ export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 # /etc/profile.d or equivalent.  Some options (such as
 # --config) may react strangely otherwise.
 #
-export HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-"./hadoop/hadoop-3.2.4/etc/hadoop"}
+export HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-"./hadoop/hadoop-3.3.0/etc/hadoop"}
 
 # The maximum amount of heap to use (Java -Xmx).  If no unit
 # is provided, it will be converted to MB.  Daemons will

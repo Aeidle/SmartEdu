@@ -46,7 +46,7 @@ export HADOOP_HEAPSIZE=1024
 
 # Set HADOOP_HOME to point to a specific hadoop install directory
 #HADOOP_HOME=${bin}/../../hadoop
-export HADOOP_HOME=./hadoop/hadoop-3.2.4
+export HADOOP_HOME=./hadoop/hadoop-3.3.0
 # Hive Configuration Directory can be controlled by:
 export HIVE_CONF_DIR=./hive/apache-hive-3.1.3-bin/conf
 
