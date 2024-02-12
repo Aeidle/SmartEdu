@@ -11,6 +11,7 @@ ENV PATH $PATH:/usr/lib/jvm/java-8-openjdk-amd64/bin
 
 #----Installing python-----------------------------------------
 RUN apt-get -y install python3 python3-pip
+RUN pip3 install jupyter
 
 #-----Installing hadoop-----------------------------
 RUN mkdir hadoop
@@ -103,6 +104,9 @@ ENV SPARK_HOME=./spark/spark-3.5.0-bin-hadoop3
 RUN wget https://archive.apache.org/dist/kafka/3.3.2/kafka_2.12-3.3.2.tgz
 RUN tar -xzvf kafka_2.12-3.3.2.tgz
 RUN rm kafka_2.12-3.3.2.tgz
+
+ENV KAFKA_HOME=/kafka_2.13-3.1.1
+ENV PATH=$PATH:$KAFKA_HOME/bin
 
 # RUN service ssh start
 # RUN $HADOOP_HOME/sbin/start-dfs.sh \
