@@ -5,13 +5,14 @@ RUN apt-get -y update
 RUN apt-get -y upgrade
 RUN apt-get install -y wget
 RUN apt-get install nano sudo
-RUN apt-get -y install openjdk-8-jdk
-ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
-ENV PATH $PATH:/usr/lib/jvm/java-8-openjdk-amd64/bin
+RUN apt-get -y install openjdk-11-jdk
+ENV JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64
+ENV PATH $PATH:/usr/lib/jvm/java-11-openjdk-amd64/bin
 
 #----Installing python-----------------------------------------
 RUN apt-get -y install python3 python3-pip
 RUN pip3 install jupyter
+RUN pip3 install pandas numpy matplotlib opencv-python confluent_kafka kafka_python hdfs
 
 #-----Installing hadoop-----------------------------
 RUN mkdir hadoop
@@ -35,6 +36,8 @@ RUN echo "export HADOOP_HDFS_HOME=$HADOOP_HOME" >>.bashrc
 RUN echo "export HADOOP_INSTALL=$HADOOP_HOME" >>.bashrc
 RUN echo "export HADOOP_MAPRED_HOME=$HADOOP_HOME" >>.bashrc
 RUN echo "export HADOOP_COMMON_HOME=$HADOOP_HOME" >>.bashrc
+RUN touch ./notes.txt
+RUN echo "This Dockerfile made by Adil Alami" >> notes.txt
 RUN echo "export HADOOP_HDFS_HOME=$HADOOP_HOME" >>.bashrc
 RUN echo "export YARN_HOME=$HADOOP_HOME" >>.bashrc
 RUN echo "export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native" >>.bashrc
@@ -90,7 +93,12 @@ RUN echo "export SBT_HOME=./sbt" >>.bashrc
 RUN wget https://dlcdn.apache.org/spark/spark-3.5.0/spark-3.5.0-bin-hadoop3.tgz
 RUN tar -xzvf spark-3.5.0-bin-hadoop3.tgz -C ./spark
 RUN rm spark-3.5.0-bin-hadoop3.tgz
-RUN echo "export SPARK_HOME=./spark/spark-3.5.0-bin-hadoop3" >>.bashrc
+RUN echo "export SPARK_HOME=/spark/spark-3.5.0-bin-hadoop3" >>.bashrc
+RUN echo "export SPARK_HOME=/spark/spark-3.5.0-bin-hadoop3" >>~/.bashrc
+RUN echo 'export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin' >> .bashrc
+RUN echo "export PYSPARK_PYTHON=/usr/bin/python3" >>.bashrc
+RUN echo "export PYSPARK_PYTHON=/usr/bin/python3" >>~/.bashrc
+
 
 # Install PySpark
 RUN pip3 install pyspark
@@ -98,15 +106,33 @@ RUN pip3 install pyspark
 # Set PySpark environment variables
 ENV PYSPARK_PYTHON=/usr/bin/python3
 ENV PYSPARK_DRIVER_PYTHON=/usr/bin/python3
-ENV SPARK_HOME=./spark/spark-3.5.0-bin-hadoop3
+ENV SPARK_HOME=/spark/spark-3.5.0-bin-hadoop3
 
 #-----Installing Kafka---------------------------------
 RUN wget https://archive.apache.org/dist/kafka/3.3.2/kafka_2.12-3.3.2.tgz
 RUN tar -xzvf kafka_2.12-3.3.2.tgz
 RUN rm kafka_2.12-3.3.2.tgz
+RUN mv kafka_2.12-3.3.2 /usr/local/kafka
 
-ENV KAFKA_HOME=/kafka_2.13-3.1.1
+# Copy the Kafka and Zookeeper service files
+ADD ./kafka_config/zookeeper.service /etc/systemd/system/zookeeper.service
+ADD ./kafka_config/kafka.service /etc/systemd/system/kafka.service
+
+# Copy the Kafka and Zookeeper startup script
+ADD ./kafka_config/start_services.sh /usr/local/kafka/start_services.sh
+
+
+ENV KAFKA_HOME=/usr/local/kafka
 ENV PATH=$PATH:$KAFKA_HOME/bin
+
+# RUN systemctl daemon-reload
+# RUN systemctl start zookeeper
+# RUN systemctl start kafka
+
+ENV KAFKA_HOME=/usr/local/kafka
+ENV PATH=$PATH:$KAFKA_HOME/bin
+
+RUN hdfs dfs -mkdir /kafka_output
 
 # RUN service ssh start
 # RUN $HADOOP_HOME/sbin/start-dfs.sh \
