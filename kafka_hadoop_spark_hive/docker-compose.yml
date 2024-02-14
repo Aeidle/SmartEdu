@@ -19,7 +19,7 @@ services:
     networks:
       - SmartEdu-network
     volumes:
-      - ./src:/SmartEdu_src
+      - ./source:/SmartEdu_src
       - hadoop_namenode:/hadoop/dfs/name
       - hadoop_datanode:/hadoop/dfs/data
       - hadoop_historyserver:/hadoop/yarn/timeline
@@ -35,6 +35,19 @@ services:
         hdfs dfs -mkdir /kafka_output
         kafka-server-start.sh $KAFKA_HOME/config/server.properties &
         jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root
+  app:
+    image: smartedu_front:1.0
+    container_name: SmartEdu_frontend
+    restart: always
+    ports:
+      - "3000:3000" # Next.js port
+    tty: true
+    networks:
+      - SmartEdu-network
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
 networks:
   SmartEdu-network:
     external: true
@@ -42,5 +55,3 @@ volumes:
   hadoop_namenode:
   hadoop_datanode:
   hadoop_historyserver:
-
-
