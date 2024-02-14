@@ -132,7 +132,7 @@ ENV PATH=$PATH:$KAFKA_HOME/bin
 ENV KAFKA_HOME=/usr/local/kafka
 ENV PATH=$PATH:$KAFKA_HOME/bin
 
-RUN hdfs dfs -mkdir /kafka_output
+# RUN hdfs dfs -mkdir /kafka_output
 
 # RUN service ssh start
 # RUN $HADOOP_HOME/sbin/start-dfs.sh \
