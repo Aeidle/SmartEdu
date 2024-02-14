@@ -1,7 +1,7 @@
 version: "1.2"
 services:
   spark-hadoop-kafka:
-    image: aeidle/big-data:smartedu1.3
+    image: aeidle/big-data:smartedu1.4
     container_name: SmartEdu_backend
     restart: always
     ports:
