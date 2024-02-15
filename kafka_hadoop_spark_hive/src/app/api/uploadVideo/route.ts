@@ -82,7 +82,7 @@ export async function POST(request: Request) {
     }
     metadata.forEach(async (videoMeta) => {
       const s = await axios
-        .post("http://localhost:3001/api/videoData", videoMeta)
+        .post("http://localhost:3000/api/videoData", videoMeta)
         .then((r) => r.data);
       console.log(s);
     });
