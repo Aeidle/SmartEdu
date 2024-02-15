@@ -1,10 +1,24 @@
+"use client";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { PresentationChartBarIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { redirect, useRouter } from "next/navigation";
 
-interface pageProps {}
+export default function Page() {
+  const [videos, setVideos] = useState([]);
+  const router = useRouter();
 
-export default function page() {
+  const getVideos = async () => {
+    const reponse = await axios.get("/api/videoData").then((res) => res.data);
+    setVideos(reponse);
+  };
+
+  useEffect(() => {
+    getVideos();
+  }, []);
+
   return (
     <div className="flex justify-center items-center pt-2 flex-col ">
       {/* band upper */}
@@ -18,7 +32,9 @@ export default function page() {
           />
         </div>
         <div className="flex flex-col justify-evenly h-[100px]  ">
-          <span className="text-3xl font-bold ">Good evening !</span>
+          <span className="text-3xl font-bold " onClick={getVideos}>
+            Good evening !
+          </span>
           <span className="text-sm font-light text-gray-700">
             Here&apos;s an Overview of your uploads
           </span>
@@ -54,24 +70,31 @@ export default function page() {
           <span className="capitalize font-medium">All Time</span>
           {/* videos */}
           <div className="grid grid-cols-3 gap-2">
-            {[1, 2, 3, 4, 5].map((e) => {
+            {videos.map((video) => {
               return (
                 <div
-                  key={e}
+                  key={video.hash}
                   className="flex-1 relative rounded-lg overflow-clip hover:scale-[.975] hover:border hover:border-white transition-all duration-200"
                 >
-                  <Image
-                    src={
-                      "https://images.pexels.com/photos/5212648/pexels-photo-5212648.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
-                    }
-                    alt="video_tumbnail"
-                    width={200}
-                    height={100}
-                    className="w-full "
-                  />
+                  <video
+                    className="w-full rounded-lg"
+                    loop
+                    muted
+                    autoPlay={true}
+                  >
+                    <source
+                      src={`/api/video-stream?hash=${video.hash}`}
+                      type="video/mp4"
+                    />
+                  </video>
                   <div className="absolute p-2 inset-0 flex flex-col justify-between bg-gradient-to-t from-stone-900 via-stone-900/60 to-stone-900/0">
                     <div className="flex justify-end">
-                      <InformationCircleIcon className="w-8 text-stone-900 cursor-pointer" />
+                      <InformationCircleIcon
+                        onClick={() => {
+                          router.push(`/dashboard/analytics/${video.hash}`);
+                        }}
+                        className="w-8 text-stone-900 cursor-pointer"
+                      />
                     </div>
                     <div className="flex flex-col">
                       <span className="text-white font-medium">
@@ -79,14 +102,17 @@ export default function page() {
                       </span>
                       <div className="flex justify-between">
                         <span className="text-stone-400 font-medium">
-                          {new Date(
-                            new Date().getTime() -
-                              Math.random() * 2 * 24 * 60 * 60 * 1000
-                          )
+                          {new Date(video.metadata.uploaded)
                             .toDateString()
                             .slice(0, 10)}
                         </span>
-                        <span className="text-stone-300 font-medium">3:40</span>
+                        <span className="text-stone-300 font-medium">
+                          {(video?.metadata?.duration / 50 / 100)
+                            .toFixed(2)
+                            .toString()
+                            .split(".")
+                            .join(":")}
+                        </span>
                       </div>
                     </div>
                   </div>

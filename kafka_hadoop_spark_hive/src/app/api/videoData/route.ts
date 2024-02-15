@@ -9,9 +9,13 @@ export async function GET(request: Request) {
   const hash = searchParams.get("hash");
   try {
     const database = readDatabase();
+    if (!hash)
+      return new Response(JSON.stringify(database), {
+        status: 200,
+      });
     const video = database.find((v) => v?.hash === hash);
     if (video)
-      return new Response(video, {
+      return new Response(JSON.stringify(video), {
         status: 200,
       });
     else

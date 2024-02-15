@@ -10,7 +10,7 @@ async function getVideoStream(req, id) {
   if (!range) {
     return new Response("Range header missing", { status: 400 });
   }
-  const uploadDir = join(process.cwd(), "uploads");
+  const uploadDir = join(process.cwd(), "source/videos");
 
   const filePath = join(uploadDir, `video_${id}.mp4`); // Define the path for the file
 

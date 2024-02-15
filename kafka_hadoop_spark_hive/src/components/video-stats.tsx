@@ -14,6 +14,7 @@ import { AnimatePresence, motion, useScroll } from "framer-motion";
 import ReactApexChart from "react-apexcharts";
 import { redirect, useRouter } from "next/navigation";
 import { toast } from "sonner";
+import axios from "axios";
 const ImageMotion = motion(Image);
 
 export default function VideoStats({ hash }: { hash: string }) {
@@ -21,17 +22,23 @@ export default function VideoStats({ hash }: { hash: string }) {
   const [videoData, setVideoData] = useState({});
   useEffect(() => {
     const getVideoData = async () => {
-      const response = await fetch(`/api/videoData?hash=${hash}`).then(
-        (response) => response.json()
-      );
-      if (response.ok) {
-        toast.success("Video is Found");
-        const data = await response.json();
-        setVideoData(data);
-      }
-      if (response.status === 500) {
-        toast.error("Error in the server while getting video");
-      }
+      const response = await axios
+        .get(`/api/videoData?hash=${hash}`)
+        .then((response) => {
+          if (response.status === 200) {
+            toast.success("Video is Found");
+            console.log(response.data);
+            return response.data;
+          }
+          if (response.status === 400) {
+            toast.success("No Video Found");
+            return {};
+          }
+        })
+        .catch((e) => {
+          toast.error("Error in the server while getting video");
+        });
+      setVideoData(response);
     };
     hash && getVideoData();
   }, [hash, router]);
@@ -131,30 +138,13 @@ export default function VideoStats({ hash }: { hash: string }) {
     },
   };
   const fetchVideoUrl = async () => {
-    const response = await fetch("/api/videoData", {
-      method: "POST",
-      body: JSON.stringify({
-        hash: "f25b31f155970c46300934bda4a76cd2f581acab45c49762832ffdfddbcf9fdd",
-      }),
-    });
+    const response = await axios
+      .get(`/api/videoData?hash=${hash}`)
+      .then((response) => response.data);
   };
   return (
     <AnimatePresence>
       <div className="flex flex-col w-full space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle onClick={fetchVideoUrl}>Processed Video</CardTitle>
-            <CardDescription>
-              The result obtained and objects detected after processing the
-              video
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-4 flex justify-center items-center">
-            <video className="w-4/5 rounded-lg" loop controls autoPlay={true}>
-              <source src={`/api/video-stream?hash=${hash}`} type="video/mp4" />
-            </video>
-          </CardContent>
-        </Card>
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
@@ -175,14 +165,20 @@ export default function VideoStats({ hash }: { hash: string }) {
             <CardHeader>
               <CardTitle>Video Stats</CardTitle>
               <CardDescription>
-                Statistics about the video content. {JSON.stringify(videoData)}
+                Statistics about the video content.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <dl className="flex flex-col gap-1 text-sm ">
                 <div className="flex items-center py-1">
                   <dt className="min-w-[100px]">Total Duration</dt>
-                  <dd className="ml-auto">2h 35m 42s</dd>
+                  <dd className="ml-auto">
+                    {(videoData?.metadata?.duration / 50 / 100)
+                      .toFixed(2)
+                      .toString()
+                      .split(".")
+                      .join(":")}
+                  </dd>
                 </div>
                 <div className="flex items-center py-1">
                   <dt className="min-w-[100px]">Resolution</dt>
@@ -218,6 +214,20 @@ export default function VideoStats({ hash }: { hash: string }) {
             </CardContent>
           </Card>
         </div>
+        <Card>
+          <CardHeader>
+            <CardTitle onClick={fetchVideoUrl}>Processed Video</CardTitle>
+            <CardDescription>
+              The result obtained and objects detected after processing the
+              video
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4 flex justify-center items-center">
+            <video className="w-4/5 rounded-lg" loop controls autoPlay={true}>
+              <source src={`/api/video-stream?hash=${hash}`} type="video/mp4" />
+            </video>
+          </CardContent>
+        </Card>
       </div>
     </AnimatePresence>
   );
@@ -250,13 +260,13 @@ function FilterShower() {
       setXPos(newX - divRect.left - nSize / 4);
       setYPos(newY - divRect.top - nSize / 4);
     }
-  }, [scrollY]);
+  }, []);
 
   const variants = {
     initial: { left: 0, top: 0, zIndex: 1 },
     expanded: {
       left: xPos,
-      top: yPos + scrollYProgress,
+      top: yPos,
       zIndex: 99,
       width: newSize,
       height: newSize,
@@ -315,4 +325,24 @@ function FilterShower() {
       </div>
     </motion.div>
   );
+}
+
+function formatMilliseconds(milliseconds) {
+  var totalSeconds = Math.floor(milliseconds / 1000);
+  var hours = Math.floor(totalSeconds / 3600);
+  var minutes = Math.floor((totalSeconds % 3600) / 60);
+  var remainingSeconds = totalSeconds % 60;
+
+  var formattedTime = "";
+  if (hours > 0) {
+    formattedTime += hours + "h ";
+  }
+  if (minutes > 0) {
+    formattedTime += minutes + "m ";
+  }
+  if (remainingSeconds > 0) {
+    formattedTime += remainingSeconds + "s";
+  }
+
+  return formattedTime.trim();
 }
