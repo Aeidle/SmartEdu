@@ -135,6 +135,9 @@ ENV PATH=$PATH:$KAFKA_HOME/bin
 ENV KAFKA_HOME=/usr/local/kafka
 ENV PATH=$PATH:$KAFKA_HOME/bin
 
+RUN sudo apt-get -y update
+RUN sudo apt-get -y install ffmpeg
+
 # RUN hdfs dfs -mkdir /kafka_output
 
 # RUN service ssh start
