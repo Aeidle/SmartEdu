@@ -38,6 +38,10 @@ services:
   app:
     image: smartedu_front:1.0
     container_name: SmartEdu_frontend
+    build:
+      context: ../../teacherHelper/
+      target: dev
+      dockerfile: Dockerfile
     restart: always
     ports:
       - "3000:3000" # Next.js port
