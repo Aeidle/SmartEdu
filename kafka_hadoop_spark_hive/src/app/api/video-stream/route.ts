@@ -4,15 +4,20 @@ import { join } from "path";
 
 const CHUNK_SIZE = 1000000; // 1MB
 
-async function getVideoStream(req, id) {
+async function getVideoStream(req, id, edit) {
   const range = req.headers.get("range");
 
   if (!range) {
     return new Response("Range header missing", { status: 400 });
   }
-  const uploadDir = join(process.cwd(), "source/videos");
 
-  const filePath = join(uploadDir, `video_${id}.mp4`); // Define the path for the file
+  let uploadDir = join(process.cwd(), "source/videos");
+  let filePath = join(uploadDir, `video_${id}.mp4`); // Define the path for the file
+
+  if (edit) {
+    uploadDir = join(process.cwd(), "source/result");
+    filePath = join(uploadDir, `output_video___${id}.mp4`); // Define the path for the file
+  }
 
   const stat = fs.statSync(filePath);
   const fileSize = stat.size;
@@ -41,9 +46,12 @@ async function getVideoStream(req, id) {
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const hash = searchParams.get("hash");
-  console.log(hash);
+  let edit_raw = searchParams.get("edit");
+  const edit = !!edit_raw;
+
+  console.log(`streaming ${hash} , with edit = ${edit}`);
   try {
-    return await getVideoStream(request, hash);
+    return await getVideoStream(request, hash, edit);
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }

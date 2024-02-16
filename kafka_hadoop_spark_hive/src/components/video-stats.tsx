@@ -15,11 +15,15 @@ import ReactApexChart from "react-apexcharts";
 import { redirect, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import axios from "axios";
+
 const ImageMotion = motion(Image);
 
 export default function VideoStats({ hash }: { hash: string }) {
   const router = useRouter();
   const [videoData, setVideoData] = useState({});
+  const [emotions, setEmotions] = useState([]);
+  const [imagesLinks, setImagesLinks] = useState([]);
+
   useEffect(() => {
     const getVideoData = async () => {
       const response = await axios
@@ -39,9 +43,18 @@ export default function VideoStats({ hash }: { hash: string }) {
           toast.error("Error in the server while getting video");
         });
       setVideoData(response);
+      setEmotions(response.processingInfo?.emotions ?? []);
+      setImagesLinks(response.processingInfo?.images ?? []);
     };
     hash && getVideoData();
   }, [hash, router]);
+
+  useEffect(() => {
+    const total = emotions.reduce((accumulator, object) => {
+      return accumulator + object?.count;
+    }, 0);
+    console.log(total);
+  }, [emotions]);
 
   const emotionsData = [
     { name: "Happy", count: 10 },
@@ -51,7 +64,7 @@ export default function VideoStats({ hash }: { hash: string }) {
     // Add more emotions as needed
   ];
   const emotionChartOptions = {
-    labels: emotionsData.map((emotion) => emotion.name),
+    labels: emotions.map((emotion) => emotion.name),
     dataLabels: {
       enabled: false, // Disable data labels
     },
@@ -73,7 +86,6 @@ export default function VideoStats({ hash }: { hash: string }) {
       },
     },
   };
-  const chartSeries = emotionsData.map((emotion) => emotion.count);
 
   const studentsChartOptions = {
     chart: {
@@ -122,20 +134,20 @@ export default function VideoStats({ hash }: { hash: string }) {
       name: "Emotions",
       options: emotionChartOptions,
       type: "donut" as const,
-      series: chartSeries,
+      series: emotions.map((emotion) => emotion.count),
     },
-    studentCount: {
-      name: "Student's Count",
-      options: studentsChartOptions,
-      type: "radialBar" as const,
-      series: [75],
-    },
-    averageHappiness: {
-      name: "Average Happiness",
-      options: averageHappinessOptions,
-      type: "radialBar" as const,
-      series: [50],
-    },
+    // studentCount: {
+    //   name: "Student's Count",
+    //   options: studentsChartOptions,
+    //   type: "radialBar" as const,
+    //   series: [75],
+    // },
+    // averageHappiness: {
+    //   name: "Engagement",
+    //   options: averageHappinessOptions,
+    //   type: "radialBar" as const,
+    //   series: [50],
+    // },
   };
   const fetchVideoUrl = async () => {
     const response = await axios
@@ -145,6 +157,23 @@ export default function VideoStats({ hash }: { hash: string }) {
   return (
     <AnimatePresence>
       <div className="flex flex-col w-full space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle onClick={fetchVideoUrl}>Processed Video</CardTitle>
+            <CardDescription>
+              The result obtained and objects detected after processing the
+              video
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4 flex justify-center items-center">
+            <video className="w-4/5 rounded-lg" loop controls autoPlay={true}>
+              <source
+                src={`/api/video-stream?hash=${hash}&edit=1`}
+                type="video/mp4"
+              />
+            </video>
+          </CardContent>
+        </Card>
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
@@ -155,8 +184,8 @@ export default function VideoStats({ hash }: { hash: string }) {
             </CardHeader>
             <CardContent className="p-0">
               <div className="grid grid-cols-2 gap-0.5 p-0.5">
-                {[1, 2, 3].map((e) => {
-                  return <FilterShower key={e} />;
+                {Object.entries(imagesLinks).map((e) => {
+                  return <FilterShower key={e} image={e} />;
                 })}
               </div>
             </CardContent>
@@ -195,7 +224,7 @@ export default function VideoStats({ hash }: { hash: string }) {
                   <dd className="ml-auto">{videoData?.metadata?.codec}</dd>
                 </div>
               </dl>
-              <div className="grid grid-cols-2 min-h-lg w-full my-4">
+              <div className="flex flex-col  min-h-lg w-full my-4">
                 {Object.entries(chartOptions).map((e) => {
                   return (
                     <div key={e[0]} className="flex flex-col my-4">
@@ -210,30 +239,22 @@ export default function VideoStats({ hash }: { hash: string }) {
                     </div>
                   );
                 })}
+                <div className="flex flex-col my-4">
+                  <span className="font-medium  text-xl">Dominating Mood</span>
+                  <span className="font-semibold text-center  text-3xl my-16 capitalize">
+                    {emotions.sort()[0]?.name}
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle onClick={fetchVideoUrl}>Processed Video</CardTitle>
-            <CardDescription>
-              The result obtained and objects detected after processing the
-              video
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-4 flex justify-center items-center">
-            <video className="w-4/5 rounded-lg" loop controls autoPlay={true}>
-              <source src={`/api/video-stream?hash=${hash}`} type="video/mp4" />
-            </video>
-          </CardContent>
-        </Card>
       </div>
     </AnimatePresence>
   );
 }
 
-function FilterShower() {
+function FilterShower({ image }: { image: [string, string] }) {
   const { scrollYProgress } = useScroll();
 
   const divRef = useRef(null);
@@ -260,13 +281,14 @@ function FilterShower() {
       setXPos(newX - divRect.left - nSize / 4);
       setYPos(newY - divRect.top - nSize / 4);
     }
+    console.log(String(image[1]).substring(2));
   }, []);
 
   const variants = {
     initial: { left: 0, top: 0, zIndex: 1 },
     expanded: {
       left: xPos,
-      top: yPos,
+      top: yPos + scrollYProgress,
       zIndex: 99,
       width: newSize,
       height: newSize,
@@ -306,14 +328,18 @@ function FilterShower() {
     >
       {isImageExpanded && (
         <div className="absolute w-full p-2  bg-gradient-to-b from-stone-900  via-stone-900/75 to-stone-900/0">
-          <span className="font-semibold text-lg text-stone-50">Nagao</span>
+          <span className="font-semibold text-lg text-stone-50">
+            {image[0]}
+          </span>
         </div>
       )}
-      <ImageMotion
+      <img
         alt="Frame 1"
         className="object-cover w-full h-full "
         height="150"
-        src={Placeholder}
+        src={
+          "data:image/jpeg;base64," + String(image[1]).substring(2).slice(0, -1)
+        }
         style={{
           aspectRatio: "150/150",
           objectFit: "cover",
