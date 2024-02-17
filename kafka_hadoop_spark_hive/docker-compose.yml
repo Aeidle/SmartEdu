@@ -33,6 +33,7 @@ services:
         start-dfs.sh
         start-yarn.sh
         hdfs dfs -mkdir /kafka_output
+        hdfs dfs -mkdir /spark_output
         kafka-server-start.sh $KAFKA_HOME/config/server.properties &
         jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root
   app:
