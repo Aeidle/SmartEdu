@@ -142,18 +142,6 @@ export default function VideoStats({ hash }: { hash: string }) {
       type: "donut" as const,
       series: emotions.map((emotion) => emotion.count),
     },
-    // studentCount: {
-    //   name: "Student's Count",
-    //   options: studentsChartOptions,
-    //   type: "radialBar" as const,
-    //   series: [75],
-    // },
-    // averageHappiness: {
-    //   name: "Engagement",
-    //   options: averageHappinessOptions,
-    //   type: "radialBar" as const,
-    //   series: [50],
-    // },
   };
   const fetchVideoUrl = async () => {
     const response = await axios
@@ -162,17 +150,9 @@ export default function VideoStats({ hash }: { hash: string }) {
   };
   if (Object.entries(emotions).length == 0)
     return (
-      <div className="flex justify-center items-center pt-16 px-6 h-full flex-1">
+      <div className="flex justify-center items-center pt-16 px-6  flex-1">
         <Card className="w-full max-w-sm animate-pulse">
           <CardHeader className="flex flex-col items-center space-y-1 ">
-            {/* <div className="spinner mb-10">
-              <div></div>
-              <div></div>
-              <div></div>
-              <div></div>
-              <div></div>
-              <div></div>
-            </div> */}
             <BeakerIcon className="h-24 aspect-square rotate-12 animate-bounce" />
             <CardTitle className="text-sm">Analytics</CardTitle>
           </CardHeader>
@@ -184,7 +164,7 @@ export default function VideoStats({ hash }: { hash: string }) {
     );
   return (
     <AnimatePresence>
-      <div className="flex flex-col w-full space-y-4">
+      <div className="flex flex-col w-full space-y-4 h-full">
         <Card>
           <CardHeader>
             <CardTitle onClick={fetchVideoUrl}>Processed Video</CardTitle>
@@ -270,7 +250,11 @@ export default function VideoStats({ hash }: { hash: string }) {
                 <div className="flex flex-col my-4">
                   <span className="font-medium  text-xl">Dominating Mood</span>
                   <span className="font-semibold text-center  text-3xl my-16 capitalize">
-                    {emotions.sort()[0]?.name}
+                    {
+                      emotions.sort((p1, p2) =>
+                        p1.count < p2.count ? 1 : p1.count > p2.count ? -1 : 0
+                      )[0]?.name
+                    }
                   </span>
                 </div>
               </div>
@@ -315,11 +299,11 @@ function FilterShower({ image }: { image: [string, string] }) {
   const variants = {
     initial: { left: 0, top: 0, zIndex: 1 },
     expanded: {
-      left: xPos,
+      left: xPos * 0.5,
       top: yPos + scrollYProgress,
       zIndex: 99,
-      width: newSize,
-      height: newSize,
+      width: newSize * 1.5,
+      // height: newSize,
     },
   };
   return (
