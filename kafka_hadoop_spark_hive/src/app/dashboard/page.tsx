@@ -1,10 +1,13 @@
 "use client";
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import {
+  InformationCircleIcon,
+  VideoCameraSlashIcon,
+} from "@heroicons/react/24/outline";
 import { PresentationChartBarIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { redirect, useRouter } from "next/navigation";
+import { RedirectType, redirect, useRouter } from "next/navigation";
 
 export default function Page() {
   const [videos, setVideos] = useState([]);
@@ -43,20 +46,25 @@ export default function Page() {
       {/* body  */}
       <span className="pt-8 pl-4 w-full font-medium "> My Videos </span>
       <div className="flex justify-between gap-4 w-full p-4">
-        {["this week", "this month", "all time"].map((e, i) => {
+        {[
+          { name: "this week", value: videos.length },
+          { name: "this month", value: videos.length * 2 },
+          { name: "all week", value: videos.length * 4 },
+        ].map((e, i) => {
           return (
             <div
-              key={e}
+              key={e.name}
               className="flex-1 p-6 shadow-md rounded-md flex flex-col gap-3 "
             >
-              <span className="capitalize font-medium">{e}</span>
+              <span className="capitalize font-medium">{e.name}</span>
               <div className="flex gap-3">
                 <div className="p-3 bg-green-100 rounded-md">
                   <PresentationChartBarIcon className="w-6 text-green-500" />
                 </div>
                 <div className="flex-col flex capitalize">
                   <span className="text-xl font-medium ">
-                    {(i + 1) * Math.round(Math.random() * 23)}
+                    {/* {(i + 1) * Math.round(Math.random() * 23)} */}
+                    {e.value}
                   </span>
                   <span className="text-sm font-light ">video uploaded</span>
                 </div>
@@ -69,56 +77,76 @@ export default function Page() {
         <div className="w-full flex flex-col gap-3">
           <span className="capitalize font-medium">All Time</span>
           {/* videos */}
-          <div className="grid grid-cols-3 gap-2">
-            {videos.map((video) => {
-              return (
-                <div
-                  key={video.hash}
-                  className="flex-1 relative rounded-lg overflow-clip hover:scale-[.975] hover:border hover:border-white transition-all duration-200"
-                >
-                  <video
-                    className="w-full rounded-lg"
-                    loop
-                    muted
-                    autoPlay={true}
+          <div
+            className={
+              videos.length
+                ? "grid grid-cols-3 gap-2"
+                : "flex justify-center items-center"
+            }
+          >
+            {videos.length > 0 ? (
+              videos.map((video) => {
+                return (
+                  <div
+                    key={video.hash}
+                    className="flex-1 relative rounded-lg overflow-clip hover:scale-[.975] hover:border hover:border-white transition-all duration-200"
                   >
-                    <source
-                      src={`/api/video-stream?hash=${video.hash}`}
-                      type="video/mp4"
-                    />
-                  </video>
-                  <div className="absolute p-2 inset-0 flex flex-col justify-between bg-gradient-to-t from-stone-900 via-stone-900/60 to-stone-900/0">
-                    <div className="flex justify-end">
-                      <InformationCircleIcon
-                        onClick={() => {
-                          router.push(`/dashboard/analytics/${video.hash}`);
-                        }}
-                        className="w-8 text-stone-900 cursor-pointer"
+                    <video
+                      className="w-full rounded-lg"
+                      loop
+                      muted
+                      autoPlay={true}
+                    >
+                      <source
+                        src={`/api/video-stream?hash=${video.hash}`}
+                        type="video/mp4"
                       />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-white font-medium">
-                        Class : 3/3
-                      </span>
-                      <div className="flex justify-between">
-                        <span className="text-stone-400 font-medium">
-                          {new Date(video.metadata.uploaded)
-                            .toDateString()
-                            .slice(0, 10)}
+                    </video>
+                    <div className="absolute p-2 inset-0 flex flex-col justify-between bg-gradient-to-t from-stone-900 via-stone-900/60 to-stone-900/0">
+                      <div className="flex justify-end">
+                        <InformationCircleIcon
+                          onClick={() => {
+                            router.push(`/dashboard/analytics/${video.hash}`);
+                          }}
+                          className="w-8 text-stone-900 cursor-pointer"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-white font-medium">
+                          Class : 3/3
                         </span>
-                        <span className="text-stone-300 font-medium">
-                          {(video?.metadata?.duration / 50 / 100)
-                            .toFixed(2)
-                            .toString()
-                            .split(".")
-                            .join(":")}
-                        </span>
+                        <div className="flex justify-between">
+                          <span className="text-stone-400 font-medium">
+                            {new Date(video.metadata.uploaded)
+                              .toDateString()
+                              .slice(0, 10)}
+                          </span>
+                          <span className="text-stone-300 font-medium">
+                            {(video?.metadata?.duration / 50 / 100)
+                              .toFixed(2)
+                              .toString()
+                              .split(".")
+                              .join(":")}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            ) : (
+              <div
+                className="bg-green-100 w-[30vw] aspect-video rounded-lg flex flex-col justify-center items-center cursor-pointer"
+                onClick={() => {
+                  router.push(`/dashboard/upload`);
+                }}
+              >
+                <VideoCameraSlashIcon className="w-16 text-green-500" />
+                <span className="text-center text-green-600">
+                  No Video has been uploaded yet
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

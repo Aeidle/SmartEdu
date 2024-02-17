@@ -87,7 +87,10 @@ export async function POST(request: Request) {
       console.log(s);
     });
 
-    return new Response("Videos uploaded successfully.");
+    return Response.json({
+      message: "Videos uploaded successfully.",
+      data: metadata[0],
+    });
   } catch (error) {
     console.error("Error uploading videos:", error);
     return new Response("VFailed to upload videos.", {

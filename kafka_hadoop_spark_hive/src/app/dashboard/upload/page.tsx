@@ -1,13 +1,15 @@
 "use client";
 import Dropzone, { DropZoneRef } from "@/components/DropZone";
 import Image from "next/image";
-import { useRef } from "react";
+import { RedirectType, redirect } from "next/navigation";
+import { useRef, useTransition } from "react";
 import { toast } from "sonner";
 
 interface pageProps {}
 
 export default function Page() {
   const dropZoneRef = useRef<DropZoneRef>(null);
+  const [, startTransition] = useTransition();
 
   const handleUpload = async () => {
     const files = dropZoneRef.current?.getFiles() ?? [];
@@ -25,8 +27,16 @@ export default function Page() {
 
       if (response.ok) {
         console.log("Videos uploaded successfully!");
+        toast.info("redirecting ! ...");
         toast.success("Videos uploaded successfully!");
-        // dropZoneRef.current?.deleteFiles();
+        const hash = (await response.json())?.data.hash;
+        setTimeout(
+          () =>
+            startTransition(async () =>
+              redirect(`/dashboard/analytics/${hash}`, RedirectType.push)
+            ),
+          2500
+        );
       } else {
         console.error("Failed to upload videos.");
         toast.error("Failed to upload videos.");

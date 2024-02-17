@@ -13,11 +13,11 @@ import {
   PlayIcon,
 } from "@heroicons/react/24/solid";
 import Image from "next/image";
-import { SVGProps, useEffect, useRef, useState } from "react";
+import { SVGProps, useEffect, useRef, useState, useTransition } from "react";
 import Placeholder from "@/assets/placeholder.jpeg";
 import { AnimatePresence, motion, useScroll } from "framer-motion";
 import ReactApexChart from "react-apexcharts";
-import { redirect, useRouter } from "next/navigation";
+import { RedirectType, redirect, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -28,6 +28,7 @@ export default function VideoStats({ hash }: { hash: string }) {
   const [videoData, setVideoData] = useState({});
   const [emotions, setEmotions] = useState([]);
   const [imagesLinks, setImagesLinks] = useState({});
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
     const getVideoData = async () => {
@@ -48,8 +49,8 @@ export default function VideoStats({ hash }: { hash: string }) {
           toast.error("Error in the server while getting video");
         });
       setVideoData(response);
-      setEmotions(response.processingInfo?.emotions ?? []);
-      setImagesLinks(response.processingInfo?.images ?? []);
+      setEmotions(response?.processingInfo?.emotions ?? []);
+      setImagesLinks(response?.processingInfo?.images ?? {});
     };
     hash && getVideoData();
   }, [hash, router]);
