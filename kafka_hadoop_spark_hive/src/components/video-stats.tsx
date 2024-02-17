@@ -6,7 +6,12 @@ import {
   CardContent,
   Card,
 } from "@/components/ui/card";
-import { ArrowsPointingOutIcon, PlayIcon } from "@heroicons/react/24/solid";
+import {
+  ArrowsPointingOutIcon,
+  BeakerIcon,
+  ChartPieIcon,
+  PlayIcon,
+} from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { SVGProps, useEffect, useRef, useState } from "react";
 import Placeholder from "@/assets/placeholder.jpeg";
@@ -22,7 +27,7 @@ export default function VideoStats({ hash }: { hash: string }) {
   const router = useRouter();
   const [videoData, setVideoData] = useState({});
   const [emotions, setEmotions] = useState([]);
-  const [imagesLinks, setImagesLinks] = useState([]);
+  const [imagesLinks, setImagesLinks] = useState({});
 
   useEffect(() => {
     const getVideoData = async () => {
@@ -154,6 +159,28 @@ export default function VideoStats({ hash }: { hash: string }) {
       .get(`/api/videoData?hash=${hash}`)
       .then((response) => response.data);
   };
+  if (Object.entries(emotions).length == 0)
+    return (
+      <div className="flex justify-center items-center pt-16 px-6 h-full flex-1">
+        <Card className="w-full max-w-sm animate-pulse">
+          <CardHeader className="flex flex-col items-center space-y-1 ">
+            {/* <div className="spinner mb-10">
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+            </div> */}
+            <BeakerIcon className="h-24 aspect-square rotate-12 animate-bounce" />
+            <CardTitle className="text-sm">Analytics</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-sm">Video is being processed</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   return (
     <AnimatePresence>
       <div className="flex flex-col w-full space-y-4">
@@ -324,7 +351,7 @@ function FilterShower({ image }: { image: [string, string] }) {
         }
         setIsImageExpanded(!isImageExpanded);
       }}
-      className={`relative group aspect-square cursor-pointer overflow-clip rounded-md`}
+      className={`relative group  cursor-pointer overflow-clip rounded-md`}
     >
       {isImageExpanded && (
         <div className="absolute w-full p-2  bg-gradient-to-b from-stone-900  via-stone-900/75 to-stone-900/0">
@@ -341,7 +368,6 @@ function FilterShower({ image }: { image: [string, string] }) {
           "data:image/jpeg;base64," + String(image[1]).substring(2).slice(0, -1)
         }
         style={{
-          aspectRatio: "150/150",
           objectFit: "cover",
         }}
         width="150"
