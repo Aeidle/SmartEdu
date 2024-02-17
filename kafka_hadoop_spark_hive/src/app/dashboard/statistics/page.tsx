@@ -1,6 +1,8 @@
 "use client";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import axios from "axios";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import Chart from "react-apexcharts";
 
 interface pageProps {}
@@ -45,7 +47,39 @@ const data = {
   ],
 };
 
-export default function page() {
+export default function Page() {
+  const [videos, setVideos] = useState([]);
+  const [emotionCounts, setEmotionCounts] = useState<{
+    [emotion: string]: number[];
+  }>({});
+
+  useEffect(() => {
+    axios.get("/api/videoData").then((response) => {
+      setVideos(response.data);
+      console.log(response.data);
+    });
+  }, []);
+
+  useEffect(() => {
+    const getEmotionsList = (): { [emotion: string]: number[] } => {
+      const emotionsList: { [emotion: string]: number[] } = {};
+
+      videos
+        ?.filter((v) => v.processingInfo)
+        .forEach((video) => {
+          video?.processingInfo?.emotions.forEach((emotion) => {
+            if (!emotionsList[emotion.name]) {
+              emotionsList[emotion.name] = [];
+            }
+            emotionsList[emotion.name].push(emotion.count);
+          });
+        });
+
+      return emotionsList;
+    };
+    setEmotionCounts(getEmotionsList);
+  }, [videos]);
+
   return (
     <div className="flex justify-center items-center pt-16 flex-col">
       {/* band upper */}
@@ -66,34 +100,57 @@ export default function page() {
         </div>
       </div>
       {/* body  */}
-      <span className="pt-8 pl-4 w-full "> Stats </span>
-      <div className="relative p-4 w-full gap-3 grid grid-cols-3">
-        <div className="absolute top-0 -left-4 aspect-square w-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob" />
-        <div className="absolute top-0 -right-4 aspect-square w-96 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000" />
-        <div className="absolute -bottom-8 left-20 aspect-square w-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000" />
-        {/* comp */}
-        {[1, 2, 4].map((e) => {
-          return (
-            <div
-              key={e}
-              className="bg-stone-100 rounded-md p-2 flex flex-col gap-2"
-            >
-              <div className="flex justify-between">
-                <span className="text-stone-900 text-xl">
-                  Total Hand Raised
+      <div className="grid grid-cols-1">
+        <span className="py-8 pl-4 w-full text-xl font-semibold">Emotions</span>
+        <div
+          className={`
+          relative p-4 w-full 
+          flex justify-start items-center h-full
+          gap-3
+          overflow-x-scroll
+          overflow-y-clip
+          `}
+          // gap-3 grid grid-cols-3
+        >
+          <div className="absolute top-0 -left-4 aspect-square w-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob" />
+          <div className="absolute top-0 -right-4 aspect-square w-96 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000" />
+          <div className="absolute -bottom-8 left-20 aspect-square w-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000" />
+          {/* comp */}
+          {Object.entries(emotionCounts).map((Emotion) => {
+            return (
+              <div
+                key={Emotion[0]}
+                className="bg-stone-100 rounded-md p-2 flex flex-col gap-2"
+              >
+                <div className="flex justify-between">
+                  <span className="text-stone-900  capitalize">
+                    Total {Emotion[0]} Emotion Detected
+                    {/* {JSON.stringify(emotionCounts)} */}
+                  </span>
+                  <InformationCircleIcon className="w-6 text-stone-900 cursor-pointer" />
+                </div>
+                <span className="text-stone-900 font-medium text-2xl">
+                  {Emotion[1].reduce(
+                    (accumulator, currentValue) => accumulator + currentValue,
+                    0
+                  )}
                 </span>
-                <InformationCircleIcon className="w-6 text-stone-900 cursor-pointer" />
+                <Chart
+                  options={data.options}
+                  series={[
+                    {
+                      name: Emotion[0],
+                      data: Emotion[1],
+                    },
+                  ]}
+                  type="bar"
+                  height={200}
+                  width={400}
+                />
               </div>
-              <span className="text-stone-900 font-medium text-2xl">230</span>
-              <Chart
-                options={data.options}
-                series={data.series}
-                type="bar"
-                width="100%"
-              />
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

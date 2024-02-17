@@ -13,13 +13,22 @@ import {
   PlayIcon,
 } from "@heroicons/react/24/solid";
 import Image from "next/image";
-import { SVGProps, useEffect, useRef, useState, useTransition } from "react";
+import {
+  Dispatch,
+  SVGProps,
+  SetStateAction,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import Placeholder from "@/assets/placeholder.jpeg";
 import { AnimatePresence, motion, useScroll } from "framer-motion";
 import ReactApexChart from "react-apexcharts";
 import { RedirectType, redirect, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import axios from "axios";
+import Modal from "./Modal";
 
 const ImageMotion = motion(Image);
 
@@ -28,7 +37,7 @@ export default function VideoStats({ hash }: { hash: string }) {
   const [videoData, setVideoData] = useState({});
   const [emotions, setEmotions] = useState([]);
   const [imagesLinks, setImagesLinks] = useState({});
-  const [, startTransition] = useTransition();
+  const [selected, setSelected] = useState<[string, unknown]>(null);
 
   useEffect(() => {
     const getVideoData = async () => {
@@ -36,7 +45,12 @@ export default function VideoStats({ hash }: { hash: string }) {
         .get(`/api/videoData?hash=${hash}`)
         .then((response) => {
           if (response.status === 200) {
-            toast.success("Video is Found");
+            toast.success("Video Hash is Found");
+            if (response.data?.processingInfo) {
+              toast.success("Video is Processed");
+            } else {
+              toast.success("Video is still under processing");
+            }
             console.log(response.data);
             return response.data;
           }
@@ -62,13 +76,6 @@ export default function VideoStats({ hash }: { hash: string }) {
     console.log(total);
   }, [emotions]);
 
-  const emotionsData = [
-    { name: "Happy", count: 10 },
-    { name: "Sad", count: 5 },
-    { name: "Angry", count: 8 },
-
-    // Add more emotions as needed
-  ];
   const emotionChartOptions = {
     labels: emotions.map((emotion) => emotion.name),
     dataLabels: {
@@ -93,48 +100,6 @@ export default function VideoStats({ hash }: { hash: string }) {
     },
   };
 
-  const studentsChartOptions = {
-    chart: {
-      height: 350,
-      type: "radialBar",
-    },
-    series: [70],
-    labels: ["Students"],
-    plotOptions: {
-      radialBar: {
-        dataLabels: {
-          name: {
-            show: false,
-          },
-          value: {
-            fontSize: "30px",
-            formatter: function (val) {
-              return parseInt(val);
-            },
-          },
-        },
-      },
-    },
-  };
-  const averageHappinessOptions = {
-    chart: {
-      height: 350,
-      type: "radialBar",
-    },
-    labels: ["Students"],
-    plotOptions: {
-      radialBar: {
-        dataLabels: {
-          name: {
-            show: false,
-          },
-          value: {
-            fontSize: "30px",
-          },
-        },
-      },
-    },
-  };
   const chartOptions = {
     emotions: {
       name: "Emotions",
@@ -144,13 +109,13 @@ export default function VideoStats({ hash }: { hash: string }) {
     },
   };
   const fetchVideoUrl = async () => {
-    const response = await axios
+    await axios
       .get(`/api/videoData?hash=${hash}`)
       .then((response) => response.data);
   };
   if (Object.entries(emotions).length == 0)
     return (
-      <div className="flex justify-center items-center pt-16 px-6  flex-1">
+      <div className="flex justify-center items-center pt-16 px-6  flex-1 h-full">
         <Card className="w-full max-w-sm animate-pulse">
           <CardHeader className="flex flex-col items-center space-y-1 ">
             <BeakerIcon className="h-24 aspect-square rotate-12 animate-bounce" />
@@ -193,7 +158,13 @@ export default function VideoStats({ hash }: { hash: string }) {
             <CardContent className="p-0">
               <div className="grid grid-cols-2 gap-0.5 p-0.5">
                 {Object.entries(imagesLinks).map((e) => {
-                  return <FilterShower key={e} image={e} />;
+                  return (
+                    <FilterShower
+                      key={e[0]}
+                      image={e}
+                      setSelected={setSelected}
+                    />
+                  );
                 })}
               </div>
             </CardContent>
@@ -208,14 +179,8 @@ export default function VideoStats({ hash }: { hash: string }) {
             <CardContent>
               <dl className="flex flex-col gap-1 text-sm ">
                 <div className="flex items-center py-1">
-                  <dt className="min-w-[100px]">Total Duration</dt>
-                  <dd className="ml-auto">
-                    {(videoData?.metadata?.duration / 50 / 100)
-                      .toFixed(2)
-                      .toString()
-                      .split(".")
-                      .join(":")}
-                  </dd>
+                  <dt className="min-w-[100px]">Total Frames</dt>
+                  <dd className="ml-auto">{videoData?.metadata?.duration}</dd>
                 </div>
                 <div className="flex items-center py-1">
                   <dt className="min-w-[100px]">Resolution</dt>
@@ -262,90 +227,51 @@ export default function VideoStats({ hash }: { hash: string }) {
           </Card>
         </div>
       </div>
+      <Modal selected={selected} setSelected={setSelected} />
     </AnimatePresence>
   );
 }
 
-function FilterShower({ image }: { image: [string, string] }) {
-  const { scrollYProgress } = useScroll();
-
-  const divRef = useRef(null);
-  const [isImageExpanded, setIsImageExpanded] = useState(false);
-  const [yPos, setYPos] = useState(0);
-  const [xPos, setXPos] = useState(0);
-  const [rectState, setRectState] = useState<any>();
-  const [newSize, setNewSize] = useState(0);
-  useEffect(() => {
-    if (divRef.current) {
-      const divRect = divRef.current.getBoundingClientRect();
-      setRectState(divRect);
-
-      const viewportWidth = window?.innerWidth;
-      const viewportHeight = window?.innerHeight;
-
-      // Calculate the new position to center the div
-      const newX = (viewportWidth - divRect.width) / 2;
-      const newY = (viewportHeight - divRect.height) / 2;
-
-      setNewSize(window?.innerHeight * 0.75);
-      const nSize = window?.innerHeight * 0.75;
-      // Apply the new position
-      setXPos(newX - divRect.left - nSize / 4);
-      setYPos(newY - divRect.top - nSize / 4);
-    }
-    console.log(String(image[1]).substring(2));
-  }, []);
-
-  const variants = {
-    initial: { left: 0, top: 0, zIndex: 1 },
-    expanded: {
-      left: xPos * 0.5,
-      top: yPos + scrollYProgress,
-      zIndex: 99,
-      width: newSize * 1.5,
-      // height: newSize,
-    },
-  };
+function FilterShower({
+  image,
+  setSelected,
+}: {
+  image: [string, unknown];
+  setSelected: Dispatch<SetStateAction<[string, unknown]>>;
+}) {
   return (
     <motion.div
-      ref={divRef}
-      variants={variants}
-      animate={isImageExpanded ? "expanded" : "initial"}
+      layoutId={`filter-${image[0]}`}
       onClick={() => {
-        console.log("happed");
-        if (isImageExpanded) {
-          const backdropToRemove = document.getElementById("backdrop");
-          if (!!backdropToRemove) {
-            backdropToRemove.parentNode?.removeChild(backdropToRemove);
-          }
-        } else {
-          const backdrop = document.createElement("div");
-          // Set backdrop styles
-          backdrop.style.position = "fixed";
-          backdrop.style.top = "0";
-          backdrop.style.left = "0";
-          backdrop.style.width = "100%";
-          backdrop.style.height = "100%";
-          backdrop.style.backgroundColor = "rgba(255, 255, 255, 0.2)"; // Semi-transparent white for glassy effect
-          backdrop.style.zIndex = "50";
-          backdrop.style.backdropFilter = "blur(5px)"; // Add glassy effect
-          // Set backdrop ID
-          backdrop.id = "backdrop";
-          // Append the backdrop to the body
-          document.body.appendChild(backdrop);
-        }
-        setIsImageExpanded(!isImageExpanded);
+        setSelected(image);
       }}
+      // onClick={() => {
+      //   if (isImageExpanded) {
+      //     const backdropToRemove = document.getElementById("backdrop");
+      //     if (!!backdropToRemove) {
+      //       backdropToRemove.parentNode?.removeChild(backdropToRemove);
+      //     }
+      //   } else {
+      //     const backdrop = document.createElement("div");
+      //     // Set backdrop styles
+      //     backdrop.style.position = "fixed";
+      //     backdrop.style.top = "0";
+      //     backdrop.style.left = "0";
+      //     backdrop.style.width = "100%";
+      //     backdrop.style.height = "100%";
+      //     backdrop.style.backgroundColor = "rgba(255, 255, 255, 0.2)"; // Semi-transparent white for glassy effect
+      //     backdrop.style.zIndex = "50";
+      //     backdrop.style.backdropFilter = "blur(5px)"; // Add glassy effect
+      //     // Set backdrop ID
+      //     backdrop.id = "backdrop";
+      //     // Append the backdrop to the body
+      //     document.body.appendChild(backdrop);
+      //   }
+      //   setIsImageExpanded(!isImageExpanded);
+      // }}
       className={`relative group  cursor-pointer overflow-clip rounded-md`}
     >
-      {isImageExpanded && (
-        <div className="absolute w-full p-2  bg-gradient-to-b from-stone-900  via-stone-900/75 to-stone-900/0">
-          <span className="font-semibold text-lg text-stone-50">
-            {image[0]}
-          </span>
-        </div>
-      )}
-      <img
+      <Image
         alt="Frame 1"
         className="object-cover w-full h-full "
         height="150"
@@ -362,24 +288,4 @@ function FilterShower({ image }: { image: [string, string] }) {
       </div>
     </motion.div>
   );
-}
-
-function formatMilliseconds(milliseconds) {
-  var totalSeconds = Math.floor(milliseconds / 1000);
-  var hours = Math.floor(totalSeconds / 3600);
-  var minutes = Math.floor((totalSeconds % 3600) / 60);
-  var remainingSeconds = totalSeconds % 60;
-
-  var formattedTime = "";
-  if (hours > 0) {
-    formattedTime += hours + "h ";
-  }
-  if (minutes > 0) {
-    formattedTime += minutes + "m ";
-  }
-  if (remainingSeconds > 0) {
-    formattedTime += remainingSeconds + "s";
-  }
-
-  return formattedTime.trim();
 }
